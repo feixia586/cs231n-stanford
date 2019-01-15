@@ -122,7 +122,7 @@ class KNearestNeighbor(object):
     #       and two broadcast sums.                                         #
     #########################################################################
     
-    # Use (a+b)^2 = a^2 + b^2 + 2ab
+    # Use (a-b)^2 = a^2 + b^2 - 2ab
     dists = np.sqrt(np.transpose([np.sum(X**2, axis=1)]) + np.sum(self.X_train**2, axis=1)-2*np.dot(X, self.X_train.T))
     #########################################################################
     #                         END OF YOUR CODE                              #
