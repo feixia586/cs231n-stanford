@@ -304,8 +304,31 @@ class FullyConnectedNet(object):
         # automated tests, make sure that your L2 regularization includes a factor #
         # of 0.5 to simplify the expression for the gradient.                      #
         ############################################################################
-        dataloss, dscores = softmax_loss(scores, y)
-        regloss = 
+        dataloss, dout = softmax_loss(scores, y)
+        
+        dout, grads['W' + str(num_layers)], grads['b' + str(num_layers)] = affine_backward(
+            dout, affi_cache[str(num_layers)])
+        loss = dataloss + 0.5 * self.reg * np.sum(self.params['W'+str(num_layers)]**2)
+        
+        for i in reversed(range(num_layers - 1)):
+            if self.use_dropout:
+                dout = dropout_backward(dout, drop_cache[str(i+1)])
+                
+            dout = relu_backward(dout, relu_cache[str(i+1)])
+            
+            if self.normalization == 'batchnorm':
+                dout, grads['gamma' + str(i+1)], grads['beta' + str(i+1)] = batchnorm_backward(
+                    dout, norm_cache[str(i+1)])
+            if self.normalization == 'layernorm':
+                dout, grads['gamma' + str(i+1)], grads['beta' + str(i+1)] = batchnorm_backward(
+                    dout, norm_cache[str(i+1)])
+                
+            dout, grads['W' + str(i+1)], grads['b' + str(i+1)] = affine_backward(
+                dout, affi_cache[str(i+1)])
+            
+            loss += 0.5 * self.reg * np.sum(self.params['W' + str(i+1)]**2)
+                 
+        
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
