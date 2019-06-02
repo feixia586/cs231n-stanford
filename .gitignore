@@ -1,2 +1,7 @@
 .ipynb_checkpoints/
 *.so
+coco_captioning/
+imagenet_val_25.npz
+squeezenet.ckpt.data-00000-of-00001
+squeezenet.ckpt.index
+squeezenet.ckpt.meta
