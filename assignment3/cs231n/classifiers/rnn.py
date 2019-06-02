@@ -140,7 +140,20 @@ class CaptioningRNN(object):
         # Note also that you are allowed to make use of functions from layers.py   #
         # in your implementation, if needed.                                       #
         ############################################################################
-        pass
+        # Forward pass
+        h0, h0_cache = affine_forward(features, W_proj, b_proj)
+        x, x_cache = word_embedding_forward(captions_in, W_embed)
+        forward_pass = {'lstm': lstm_forward, 'rnn': rnn_forward}[self.cell_type]
+        h, h_cache = forward_pass(x, h0, Wx, Wh, b)
+        s, s_cache = temporal_affine_forward(h, W_vocab, b_vocab)
+        loss, dout = temporal_softmax_loss(s, captions_out,  mask)
+        
+        # Backward pass
+        dout, grads['W_vocab'], grads['b_vocab'] = temporal_affine_backward(dout, s_cache)
+        backward_pass = {'lstm': lstm_backward, 'rnn':rnn_backward}[self.cell_type]
+        dout, dh0, grads['Wx'], grads['Wh'], grads['b'] = backward_pass(dout, h_cache)
+        grads['W_embed'] = word_embedding_backward(dout, x_cache)
+        _, grads['W_proj'], grads['b_proj'] = affine_backward(dh0, h0_cache)
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
@@ -205,7 +218,22 @@ class CaptioningRNN(object):
         # NOTE: we are still working over minibatches in this function. Also if   #
         # you are using an LSTM, initialize the first cell state to zeros.        #
         ###########################################################################
-        pass
+        h0, _ = affine_forward(features, W_proj, b_proj)
+        start = (self._start * np.ones(N)).astype(int)
+        
+        forward_step = {'lstm': lstm_step_forward, 'rnn': rnn_step_forward}[self.cell_type]
+        
+        x = W_embed[start, :]
+        h = h0
+        for t in range(max_length):
+            h, _ = forward_step(x, h, Wx, Wh, b)
+            out, _ = affine_forward(h, W_vocab, b_vocab)
+            
+            idx = np.argmax(out, axis=1)
+            captions[:, t] = idx
+            x = W_embed[idx, :]
+            
+        
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
