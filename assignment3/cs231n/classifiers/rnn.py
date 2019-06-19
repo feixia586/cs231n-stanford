@@ -225,8 +225,12 @@ class CaptioningRNN(object):
         
         x = W_embed[start, :]
         h = h0
+        c = 0
         for t in range(max_length):
-            h, _ = forward_step(x, h, Wx, Wh, b)
+            if self.cell_type == 'lstm':
+                h, c, _ = forward_step(x, h, c, Wx, Wh, b)
+            elif self.cell_type == 'rnn':
+                h, _ = rnn_step_forward(x, h, Wx, Wh, b)
             out, _ = affine_forward(h, W_vocab, b_vocab)
             
             idx = np.argmax(out, axis=1)
